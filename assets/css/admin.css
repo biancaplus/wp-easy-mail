@@ -1,0 +1,150 @@
+.wpem-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin: -6px -12px 20px;
+	padding: 0 12px;
+	border-bottom: 1px solid #c3c4c7;
+}
+
+.wpem-tab {
+	padding: 10px 14px;
+	border: 0;
+	border-bottom: 3px solid transparent;
+	background: transparent;
+	color: #50575e;
+	cursor: pointer;
+}
+
+.wpem-tab.is-active {
+	border-bottom-color: #2271b1;
+	color: #1d2327;
+	font-weight: 600;
+}
+
+.wpem-panel {
+	display: none;
+}
+
+.wpem-panel.is-active {
+	display: block;
+}
+
+.wpem-row {
+	display: grid;
+	grid-template-columns: 180px minmax(260px, 1fr);
+	gap: 8px 18px;
+	align-items: start;
+	margin: 0 0 18px;
+}
+
+.wpem-row-label {
+	padding-top: 7px;
+	font-weight: 600;
+}
+
+.wpem-row .description {
+	grid-column: 2;
+}
+
+.wpem-field-config {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+	align-items: end;
+	margin: 0 0 14px;
+	padding: 14px;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+}
+
+.wpem-field-config .wpem-checkbox {
+	grid-column: span 1;
+}
+
+.wpem-field-config legend {
+	padding: 0 6px;
+	font-weight: 600;
+}
+
+.wpem-field-config label span {
+	display: block;
+	margin-bottom: 5px;
+}
+
+.wpem-field-config input[type="text"] {
+	width: 100%;
+}
+
+.wpem-field-config .wpem-checkbox {
+	padding-bottom: 5px;
+}
+
+.wpem-field-config .wpem-checkbox input {
+	margin-right: 4px;
+}
+
+.wpem-field-config > .description {
+	padding-bottom: 6px;
+}
+
+.wpem-dashboard-card,
+.wpem-detail {
+	max-width: 900px;
+	margin-top: 20px;
+	padding: 20px;
+	border: 1px solid #c3c4c7;
+	border-radius: 5px;
+	background: #fff;
+}
+
+.wpem-detail {
+	margin-bottom: 24px;
+}
+
+.wpem-detail h2 {
+	margin-top: 0;
+}
+
+.wpem-detail th {
+	width: 180px;
+}
+
+.wpem-detail-value {
+	white-space: normal;
+	word-break: break-word;
+}
+
+.wpem-type-tag {
+	display: inline-block;
+	padding: 3px 9px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1.5;
+}
+
+.wpem-tag-contact {
+	background: #e7f5ff;
+	color: #135e96;
+}
+
+.wpem-tag-quote {
+	background: #f3e8ff;
+	color: #7e22ce;
+}
+
+.wpem-delete-link {
+	color: #b32d2e;
+}
+
+@media (max-width: 782px) {
+	.wpem-row,
+	.wpem-field-config {
+		grid-template-columns: 1fr;
+	}
+
+	.wpem-row .description {
+		grid-column: 1;
+	}
+}

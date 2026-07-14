@@ -1,0 +1,104 @@
+<?php
+/**
+ * 前台表单模板。
+ *
+ * 可用变量：$form_id、$settings、$fields、$instance_id、$recaptcha_on。
+ *
+ * @package WPEasyMail
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+?>
+<section class="wpem-form-wrap" aria-labelledby="<?php echo esc_attr( $instance_id ); ?>-title">
+	<header class="wpem-form-header">
+		<h2 id="<?php echo esc_attr( $instance_id ); ?>-title"><?php echo esc_html( get_the_title( $form_id ) ); ?></h2>
+		<?php if ( ! empty( $settings['description'] ) ) : ?>
+			<p><?php echo esc_html( $settings['description'] ); ?></p>
+		<?php endif; ?>
+	</header>
+
+	<form
+		class="wpem-form"
+		data-required-message="<?php echo esc_attr( $settings['required_message'] ); ?>"
+		data-invalid-message="<?php echo esc_attr( $settings['invalid_message'] ); ?>"
+		data-recaptcha="<?php echo $recaptcha_on ? '1' : '0'; ?>"
+		novalidate
+	>
+		<input type="hidden" name="action" value="wpem_submit_form">
+		<input type="hidden" name="form_id" value="<?php echo esc_attr( $form_id ); ?>">
+		<input type="hidden" name="nonce" value="<?php echo esc_attr( wp_create_nonce( 'wpem_submit_' . $form_id ) ); ?>">
+		<div class="wpem-honeypot" aria-hidden="true">
+			<label>
+				<?php esc_html_e( '网站', 'wp-easy-mail' ); ?>
+				<input type="text" name="website" tabindex="-1" autocomplete="off">
+			</label>
+		</div>
+
+		<div class="wpem-fields">
+			<?php foreach ( $fields as $key => $definition ) : ?>
+				<?php
+				$field_settings = isset( $settings['fields'][ $key ] ) ? $settings['fields'][ $key ] : $definition;
+				if ( ! WPEM_Form_Types::is_field_visible( $field_settings, $definition ) ) {
+					continue;
+				}
+				$field_id    = $instance_id . '-' . $key;
+				$is_required = ! empty( $field_settings['required'] );
+				?>
+				<div class="wpem-field">
+					<label for="<?php echo esc_attr( $field_id ); ?>">
+						<?php echo esc_html( $field_settings['label'] ); ?>
+						<?php if ( $is_required ) : ?>
+							<span class="wpem-required" aria-hidden="true">*</span>
+						<?php endif; ?>
+					</label>
+
+					<?php if ( 'textarea' === $definition['type'] ) : ?>
+						<textarea
+							id="<?php echo esc_attr( $field_id ); ?>"
+							name="fields[<?php echo esc_attr( $key ); ?>]"
+							placeholder="<?php echo esc_attr( $field_settings['placeholder'] ); ?>"
+							<?php echo $is_required ? 'required aria-required="true"' : ''; ?>
+						></textarea>
+					<?php else : ?>
+						<input
+							id="<?php echo esc_attr( $field_id ); ?>"
+							type="<?php echo esc_attr( $definition['type'] ); ?>"
+							name="fields[<?php echo esc_attr( $key ); ?>]"
+							placeholder="<?php echo esc_attr( $field_settings['placeholder'] ); ?>"
+							<?php echo $is_required ? 'required aria-required="true"' : ''; ?>
+						>
+					<?php endif; ?>
+					<span class="wpem-field-error" aria-live="polite"></span>
+				</div>
+			<?php endforeach; ?>
+		</div>
+
+		<button type="submit" class="wpem-submit" data-loading-text="<?php esc_attr_e( '提交中…', 'wp-easy-mail' ); ?>">
+			<?php echo esc_html( $settings['submit_text'] ); ?>
+		</button>
+
+		<?php if ( $recaptcha_on ) : ?>
+			<p class="wpem-recaptcha-terms">
+				<?php
+				echo wp_kses(
+					__(
+						'本网站受 reCAPTCHA 保护，并适用 Google 的 <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">隐私政策</a>和<a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer">服务条款</a>。',
+						'wp-easy-mail'
+					),
+					array(
+						'a' => array(
+							'href'   => array(),
+							'target' => array(),
+							'rel'    => array(),
+						),
+					)
+				);
+				?>
+			</p>
+		<?php endif; ?>
+
+		<div class="wpem-response" role="status" aria-live="polite" hidden></div>
+	</form>
+</section>

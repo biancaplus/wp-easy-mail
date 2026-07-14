@@ -1,0 +1,152 @@
+.wpem-form-wrap {
+	--wpem-accent: #2271b1;
+	--wpem-border: #c3c4c7;
+	--wpem-error: #b32d2e;
+	--wpem-success: #008a20;
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 720px;
+	padding: 28px;
+	border: 1px solid #e2e4e7;
+	border-radius: 10px;
+	background: #fff;
+	color: #1d2327;
+}
+
+.wpem-form-wrap *,
+.wpem-form-wrap *::before,
+.wpem-form-wrap *::after {
+	box-sizing: border-box;
+}
+
+.wpem-form-header {
+	margin-bottom: 24px;
+}
+
+.wpem-form-header h2 {
+	margin: 0 0 8px;
+	font-size: 1.75rem;
+}
+
+.wpem-form-header p {
+	margin: 0;
+	color: #50575e;
+}
+
+.wpem-fields {
+	display: grid;
+	gap: 18px;
+}
+
+.wpem-field label {
+	display: block;
+	margin-bottom: 7px;
+	font-weight: 600;
+}
+
+.wpem-field input,
+.wpem-field textarea {
+	width: 100%;
+	min-height: 44px;
+	padding: 10px 12px;
+	border: 1px solid var(--wpem-border);
+	border-radius: 5px;
+	background: #fff;
+	color: inherit;
+	font: inherit;
+}
+
+.wpem-field textarea {
+	min-height: 140px;
+	resize: vertical;
+}
+
+.wpem-field input:focus,
+.wpem-field textarea:focus {
+	border-color: var(--wpem-accent);
+	outline: 2px solid color-mix(in srgb, var(--wpem-accent) 24%, transparent);
+	outline-offset: 1px;
+}
+
+.wpem-field input.has-error,
+.wpem-field textarea.has-error {
+	border-color: var(--wpem-error);
+}
+
+.wpem-required,
+.wpem-field-error {
+	color: var(--wpem-error);
+}
+
+.wpem-field-error {
+	display: block;
+	min-height: 18px;
+	margin-top: 4px;
+	font-size: 0.875rem;
+}
+
+.wpem-submit {
+	margin-top: 20px;
+	padding: 11px 22px;
+	border: 0;
+	border-radius: 5px;
+	background: var(--wpem-accent);
+	color: #fff;
+	font: inherit;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.wpem-submit:hover {
+	filter: brightness(0.92);
+}
+
+.wpem-submit:focus-visible {
+	outline: 2px solid currentcolor;
+	outline-offset: 3px;
+}
+
+.wpem-submit:disabled {
+	cursor: wait;
+	opacity: 0.65;
+}
+
+.wpem-response {
+	margin-top: 18px;
+	padding: 12px 14px;
+	border-radius: 5px;
+}
+
+.wpem-response.is-success {
+	background: #edfaef;
+	color: var(--wpem-success);
+}
+
+.wpem-response.is-error {
+	background: #fcf0f1;
+	color: var(--wpem-error);
+}
+
+.wpem-recaptcha-terms {
+	margin: 16px 0 0;
+	color: #646970;
+	font-size: 0.75rem;
+}
+
+.wpem-honeypot {
+	position: absolute !important;
+	left: -10000px !important;
+	width: 1px !important;
+	height: 1px !important;
+	overflow: hidden !important;
+}
+
+.grecaptcha-badge {
+	visibility: hidden;
+}
+
+@media (max-width: 600px) {
+	.wpem-form-wrap {
+		padding: 20px;
+	}
+}
