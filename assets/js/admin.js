@@ -82,6 +82,38 @@
 			syncRequiredState();
 			visibleInput.addEventListener('change', syncRequiredState);
 		});
+
+		bindThemeColorInputs(root);
+	}
+
+	/**
+	 * 同步主题色选择器与十六进制输入。
+	 *
+	 * @param {HTMLElement} root 设置根元素。
+	 * @returns {void}
+	 */
+	function bindThemeColorInputs(root) {
+		root.querySelectorAll('.wpem-color-field').forEach(function (field) {
+			var picker = field.querySelector('.wpem-color-picker');
+			var text = field.querySelector('.wpem-color-text');
+			if (!picker || !text) {
+				return;
+			}
+
+			picker.addEventListener('input', function () {
+				text.value = picker.value.toLowerCase();
+			});
+
+			text.addEventListener('change', function () {
+				var value = text.value.trim();
+				if (/^#[0-9a-fA-F]{6}$/.test(value)) {
+					picker.value = value.toLowerCase();
+					text.value = value.toLowerCase();
+					return;
+				}
+				text.value = picker.value.toLowerCase();
+			});
+		});
 	}
 
 	/**

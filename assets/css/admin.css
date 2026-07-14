@@ -47,6 +47,26 @@
 	grid-column: 2;
 }
 
+.wpem-color-field {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.wpem-color-picker {
+	width: 42px;
+	height: 34px;
+	padding: 0;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	background: #fff;
+	cursor: pointer;
+}
+
+.wpem-color-text {
+	max-width: 120px;
+}
+
 .wpem-field-config {
 	display: grid;
 	grid-template-columns: 1fr 1fr;

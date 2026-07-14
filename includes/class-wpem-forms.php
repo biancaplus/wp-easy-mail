@@ -125,6 +125,12 @@ class WPEM_Forms {
 				$this->render_select( 'form_type', __( '表单类型', 'wp-easy-mail' ), $settings['form_type'], $types );
 				$this->render_textarea( 'description', __( '表单描述', 'wp-easy-mail' ), $settings['description'] );
 				$this->render_text_input( 'submit_text', __( '提交按钮文字', 'wp-easy-mail' ), $settings['submit_text'] );
+				$this->render_color_input(
+					'theme_color',
+					__( '主题色', 'wp-easy-mail' ),
+					isset( $settings['theme_color'] ) ? $settings['theme_color'] : '#111111',
+					__( '同步用于前台提交按钮与 HTML 通知邮件的主题色。', 'wp-easy-mail' )
+				);
 				?>
 			</section>
 
@@ -252,6 +258,44 @@ class WPEM_Forms {
 	}
 
 	/**
+	 * 输出主题色选择项。
+	 *
+	 * @param string $key         配置键。
+	 * @param string $label       标签。
+	 * @param string $value       当前值。
+	 * @param string $description 描述。
+	 * @return void
+	 */
+	private function render_color_input( $key, $label, $value, $description = '' ) {
+		$color = WPEM_Form_Types::sanitize_theme_color( $value );
+		?>
+		<div class="wpem-row">
+			<span class="wpem-row-label"><?php echo esc_html( $label ); ?></span>
+			<div class="wpem-color-field">
+				<input
+					type="color"
+					class="wpem-color-picker"
+					value="<?php echo esc_attr( $color ); ?>"
+					aria-label="<?php echo esc_attr( $label ); ?>"
+				>
+				<input
+					type="text"
+					class="regular-text wpem-color-text"
+					name="wpem_settings[<?php echo esc_attr( $key ); ?>]"
+					value="<?php echo esc_attr( $color ); ?>"
+					pattern="^#([A-Fa-f0-9]{6})$"
+					maxlength="7"
+					placeholder="#111111"
+				>
+			</div>
+			<?php if ( $description ) : ?>
+				<span class="description"><?php echo esc_html( $description ); ?></span>
+			<?php endif; ?>
+		</div>
+		<?php
+	}
+
+	/**
 	 * 输出多行输入项。
 	 *
 	 * @param string $key         配置键。
@@ -334,6 +378,7 @@ class WPEM_Forms {
 			'form_type'        => $type,
 			'description'      => isset( $raw['description'] ) ? sanitize_textarea_field( $raw['description'] ) : $defaults['description'],
 			'submit_text'      => isset( $raw['submit_text'] ) ? sanitize_text_field( $raw['submit_text'] ) : $defaults['submit_text'],
+			'theme_color'      => isset( $raw['theme_color'] ) ? WPEM_Form_Types::sanitize_theme_color( $raw['theme_color'] ) : $defaults['theme_color'],
 			'email_to'         => isset( $raw['email_to'] ) ? sanitize_text_field( $raw['email_to'] ) : $defaults['email_to'],
 			'email_subject'    => isset( $raw['email_subject'] ) ? sanitize_text_field( $raw['email_subject'] ) : $defaults['email_subject'],
 			'email_message'    => isset( $raw['email_message'] ) ? wp_kses_post( $raw['email_message'] ) : $defaults['email_message'],

@@ -104,7 +104,7 @@ class WPEM_Submission_Handler {
 		}
 
 		$this->set_email_status( $submission_id, 'sending' );
-		$mail_sent = $this->mailer->send( $settings, $values, $ip );
+		$mail_sent = $this->mailer->send( $settings, $values, $ip, $form_id );
 		$this->set_email_status( $submission_id, $mail_sent ? 'sent' : 'failed' );
 
 		wp_send_json_success( array( 'message' => $settings['success_message'] ) );

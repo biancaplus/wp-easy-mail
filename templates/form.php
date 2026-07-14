@@ -10,12 +10,31 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+
+$theme_color = WPEM_Form_Types::sanitize_theme_color(
+	isset( $settings['theme_color'] ) ? $settings['theme_color'] : '#111111'
+);
 ?>
-<section class="wpem-form-wrap" aria-labelledby="<?php echo esc_attr( $instance_id ); ?>-title">
+<section
+	class="wpem-form-wrap"
+	style="--wpem-accent: <?php echo esc_attr( $theme_color ); ?>;"
+	aria-labelledby="<?php echo esc_attr( $instance_id ); ?>-title"
+>
 	<header class="wpem-form-header">
 		<h2 id="<?php echo esc_attr( $instance_id ); ?>-title"><?php echo esc_html( get_the_title( $form_id ) ); ?></h2>
 		<?php if ( ! empty( $settings['description'] ) ) : ?>
-			<p><?php echo esc_html( $settings['description'] ); ?></p>
+			<div class="wpem-form-description">
+				<?php
+				$description_lines = preg_split( '/\r\n|\r|\n/', (string) $settings['description'] );
+				foreach ( $description_lines as $line ) {
+					$line = trim( $line );
+					if ( '' === $line ) {
+						continue;
+					}
+					echo '<p>' . esc_html( $line ) . '</p>';
+				}
+				?>
+			</div>
 		<?php endif; ?>
 	</header>
 
@@ -84,7 +103,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<?php
 				echo wp_kses(
 					__(
-						'本网站受 reCAPTCHA 保护，并适用 Google 的 <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">隐私政策</a>和<a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer">服务条款</a>。',
+						'本网站受 reCAPTCHA 和 Google<a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">隐私政策</a>及<a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer">服务条款</a>保护。',
 						'wp-easy-mail'
 					),
 					array(

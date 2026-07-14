@@ -54,24 +54,68 @@ class WPEM_Form_Types {
 	 * @return array<string, array<string, mixed>>
 	 */
 	public static function get_fields( $type ) {
-		$common = array(
+		if ( 'get_quote' === $type ) {
+			return array(
+				'name'         => array(
+					'type'        => 'text',
+					'label'       => __( '姓名', 'wp-easy-mail' ),
+					'placeholder' => __( '请输入您的姓名', 'wp-easy-mail' ),
+					'required'    => true,
+				),
+				'email'        => array(
+					'type'        => 'email',
+					'label'       => __( '电子邮件', 'wp-easy-mail' ),
+					'placeholder' => __( '请输入您的电子邮件地址', 'wp-easy-mail' ),
+					'required'    => true,
+				),
+				'phone'        => array(
+					'type'        => 'tel',
+					'label'       => __( '电话', 'wp-easy-mail' ),
+					'placeholder' => __( '请输入您的电话号码', 'wp-easy-mail' ),
+					'required'    => false,
+					'toggleable'  => true,
+				),
+				'company'      => array(
+					'type'        => 'text',
+					'label'       => __( '公司', 'wp-easy-mail' ),
+					'placeholder' => __( '请输入公司名称', 'wp-easy-mail' ),
+					'required'    => false,
+					'toggleable'  => true,
+				),
+				'requirements' => array(
+					'type'        => 'textarea',
+					'label'       => __( '需求描述', 'wp-easy-mail' ),
+					'placeholder' => __( '请描述您的需求', 'wp-easy-mail' ),
+					'required'    => true,
+				),
+				'budget'       => array(
+					'type'        => 'text',
+					'label'       => __( '预算', 'wp-easy-mail' ),
+					'placeholder' => __( '请输入预算范围', 'wp-easy-mail' ),
+					'required'    => true,
+				),
+			);
+		}
+
+		// 联系我们：姓名 → 电子邮件 → 电话 → 信息。
+		return array(
 			'name'    => array(
 				'type'        => 'text',
 				'label'       => __( '姓名', 'wp-easy-mail' ),
-				'placeholder' => __( '请输入姓名', 'wp-easy-mail' ),
+				'placeholder' => __( '请输入您的姓名', 'wp-easy-mail' ),
 				'required'    => true,
 			),
 			'email'   => array(
 				'type'        => 'email',
-				'label'       => __( '邮箱', 'wp-easy-mail' ),
-				'placeholder' => __( '请输入邮箱', 'wp-easy-mail' ),
+				'label'       => __( '电子邮件', 'wp-easy-mail' ),
+				'placeholder' => __( '请输入您的电子邮件地址', 'wp-easy-mail' ),
 				'required'    => true,
 			),
 			'phone'   => array(
 				'type'        => 'tel',
 				'label'       => __( '电话', 'wp-easy-mail' ),
-				'placeholder' => __( '请输入电话', 'wp-easy-mail' ),
-				'required'    => false,
+				'placeholder' => __( '请输入您的电话号码', 'wp-easy-mail' ),
+				'required'    => true,
 				'toggleable'  => true,
 			),
 			'company' => array(
@@ -81,31 +125,13 @@ class WPEM_Form_Types {
 				'required'    => false,
 				'toggleable'  => true,
 			),
-		);
-
-		if ( 'get_quote' === $type ) {
-			$common['requirements'] = array(
+			'message' => array(
 				'type'        => 'textarea',
-				'label'       => __( '需求描述', 'wp-easy-mail' ),
-				'placeholder' => __( '请描述您的需求', 'wp-easy-mail' ),
+				'label'       => __( '信息', 'wp-easy-mail' ),
+				'placeholder' => __( '请输入您的留言', 'wp-easy-mail' ),
 				'required'    => true,
-			);
-			$common['budget']       = array(
-				'type'        => 'text',
-				'label'       => __( '预算', 'wp-easy-mail' ),
-				'placeholder' => __( '请输入预算范围', 'wp-easy-mail' ),
-				'required'    => true,
-			);
-			return $common;
-		}
-
-		$common['message'] = array(
-			'type'        => 'textarea',
-			'label'       => __( '留言', 'wp-easy-mail' ),
-			'placeholder' => __( '请输入留言内容', 'wp-easy-mail' ),
-			'required'    => true,
+			),
 		);
-		return $common;
 	}
 
 	/**
@@ -126,16 +152,26 @@ class WPEM_Form_Types {
 				'label'       => $field['label'],
 				'placeholder' => $field['placeholder'],
 				'required'    => ! empty( $field['required'] ),
-				'visible'     => true,
+				// 联系我们默认隐藏「公司」，与设计稿四字段布局一致。
+				'visible'     => ( 'contact_us' === $type && 'company' === $key ) ? false : true,
 			);
 		}
 
 		$site_email = self::get_site_email_defaults();
 
+		$description = ( 'contact_us' === $type )
+			? __( "我们期待您的回复。我们的团队随时准备为您提供帮助。\n请填写以下电子邮件表格，我们将与您联系。", 'wp-easy-mail' )
+			: __( '请填写以下信息，我们会尽快与您联系。', 'wp-easy-mail' );
+
+		$submit_text = ( 'contact_us' === $type )
+			? __( '发送信息', 'wp-easy-mail' )
+			: __( '提交', 'wp-easy-mail' );
+
 		return array(
 			'form_type'        => $type,
-			'description'      => __( '请填写以下信息，我们会尽快与您联系。', 'wp-easy-mail' ),
-			'submit_text'      => __( '提交', 'wp-easy-mail' ),
+			'description'      => $description,
+			'submit_text'      => $submit_text,
+			'theme_color'      => '#111111',
 			'email_to'         => $site_email['email_to'],
 			'email_subject'    => __( '新的表单提交 - [name]', 'wp-easy-mail' ),
 			'email_message'    => self::get_default_email_message( $type ),
@@ -151,6 +187,17 @@ class WPEM_Form_Types {
 			'invalid_message'  => __( '请输入有效的格式。', 'wp-easy-mail' ),
 			'fields'           => $labels,
 		);
+	}
+
+	/**
+	 * 清洗主题色，非法值回退默认。
+	 *
+	 * @param string $color 主题色。
+	 * @return string
+	 */
+	public static function sanitize_theme_color( $color ) {
+		$sanitized = sanitize_hex_color( $color );
+		return $sanitized ? $sanitized : '#111111';
 	}
 
 	/**
