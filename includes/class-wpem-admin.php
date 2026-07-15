@@ -88,6 +88,9 @@ class WPEM_Admin {
 		}
 
 		wp_enqueue_style( 'wpem-admin', WPEM_URL . 'assets/css/admin.css', array(), WPEM_VERSION );
+		if ( $is_form_screen ) {
+			wp_enqueue_style( 'wpem-frontend', WPEM_URL . 'assets/css/frontend.css', array(), WPEM_VERSION );
+		}
 		wp_enqueue_script( 'wpem-admin', WPEM_URL . 'assets/js/admin.js', array( 'jquery' ), WPEM_VERSION, true );
 		wp_localize_script(
 			'wpem-admin',

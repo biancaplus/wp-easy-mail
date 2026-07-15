@@ -86,6 +86,7 @@
 		});
 
 		bindThemeColorInputs(root);
+		bindTemplatePicker(root);
 	}
 
 	/**
@@ -114,6 +115,36 @@
 	}
 
 	/**
+	 * 将主题色同步到模板预览。
+	 *
+	 * @param {HTMLElement} root 设置根元素。
+	 * @param {string} color 十六进制颜色。
+	 * @returns {void}
+	 */
+	function syncPreviewThemeColor(root, color) {
+		root.querySelectorAll('.wpem-template-preview').forEach(function (preview) {
+			preview.style.setProperty('--wpem-accent', color);
+		});
+	}
+
+	/**
+	 * 绑定表单模板选择交互。
+	 *
+	 * @param {HTMLElement} root 设置根元素。
+	 * @returns {void}
+	 */
+	function bindTemplatePicker(root) {
+		root.querySelectorAll('input[name="wpem_settings[form_template]"]').forEach(function (input) {
+			input.addEventListener('change', function () {
+				root.querySelectorAll('.wpem-template-option').forEach(function (option) {
+					var radio = option.querySelector('input[type="radio"]');
+					option.classList.toggle('is-selected', !!(radio && radio.checked));
+				});
+			});
+		});
+	}
+
+	/**
 	 * 同步主题色选择器与十六进制输入。
 	 *
 	 * @param {HTMLElement} root 设置根元素。
@@ -127,19 +158,40 @@
 				return;
 			}
 
+			/**
+			 * 应用颜色到输入与预览。
+			 *
+			 * @param {string} color 颜色值。
+			 * @returns {void}
+			 */
+			function applyColor(color) {
+				var next = color.toLowerCase();
+				picker.value = next;
+				text.value = next;
+				syncPreviewThemeColor(root, next);
+			}
+
 			picker.addEventListener('input', function () {
-				text.value = picker.value.toLowerCase();
+				applyColor(picker.value);
 			});
 
 			text.addEventListener('change', function () {
 				var value = text.value.trim();
 				if (/^#[0-9a-fA-F]{6}$/.test(value)) {
-					picker.value = value.toLowerCase();
-					text.value = value.toLowerCase();
+					applyColor(value);
 					return;
 				}
 				text.value = picker.value.toLowerCase();
 			});
+
+			var submitText = root.querySelector('input[name="wpem_settings[submit_text]"]');
+			if (submitText) {
+				submitText.addEventListener('input', function () {
+					root.querySelectorAll('.wpem-template-preview .wpem-submit').forEach(function (button) {
+						button.textContent = submitText.value || '发送信息';
+					});
+				});
+			}
 		});
 	}
 

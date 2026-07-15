@@ -172,6 +172,7 @@ class WPEM_Form_Types {
 			'description'      => $description,
 			'submit_text'      => $submit_text,
 			'theme_color'      => '#111111',
+			'form_template'    => 'classic',
 			'email_to'         => $site_email['email_to'],
 			'email_subject'    => __( '新的表单提交 - [name]', 'wp-easy-mail' ),
 			'email_message'    => self::get_default_email_message( $type ),

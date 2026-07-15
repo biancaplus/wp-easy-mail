@@ -89,11 +89,17 @@ class WPEM_Plugin {
 		$instance_id  = wp_unique_id( 'wpem-form-' );
 		$recaptcha    = get_option( 'wpem_recaptcha_settings', array() );
 		$recaptcha_on = ! empty( $recaptcha['enabled'] ) && ! empty( $recaptcha['site_key'] ) && ! empty( $recaptcha['secret_key'] );
+		$theme_color  = WPEM_Form_Types::sanitize_theme_color(
+			isset( $settings['theme_color'] ) ? $settings['theme_color'] : '#111111'
+		);
+		$template     = WPEM_Form_Templates::sanitize(
+			isset( $settings['form_template'] ) ? $settings['form_template'] : 'classic'
+		);
 
 		$this->enqueue_frontend_assets( $recaptcha, $recaptcha_on );
 
 		ob_start();
-		include WPEM_PATH . 'templates/form.php';
+		include WPEM_Form_Templates::get_path( $template );
 		return (string) ob_get_clean();
 	}
 

@@ -123,13 +123,18 @@ class WPEM_Forms {
 			<section class="wpem-panel is-active" data-panel="form">
 				<?php
 				$this->render_select( 'form_type', __( '表单类型', 'wp-easy-mail' ), $settings['form_type'], $types );
+				$this->render_template_picker(
+					isset( $settings['form_template'] ) ? $settings['form_template'] : 'classic',
+					isset( $settings['theme_color'] ) ? $settings['theme_color'] : '#111111',
+					isset( $settings['submit_text'] ) ? $settings['submit_text'] : __( '发送信息', 'wp-easy-mail' )
+				);
 				$this->render_textarea( 'description', __( '表单描述', 'wp-easy-mail' ), $settings['description'] );
 				$this->render_text_input( 'submit_text', __( '提交按钮文字', 'wp-easy-mail' ), $settings['submit_text'] );
 				$this->render_color_input(
 					'theme_color',
 					__( '主题色', 'wp-easy-mail' ),
 					isset( $settings['theme_color'] ) ? $settings['theme_color'] : '#111111',
-					__( '同步用于前台提交按钮与 HTML 通知邮件的主题色。', 'wp-easy-mail' )
+					__( '同步用于前台提交按钮、合规链接与 HTML 通知邮件的主题色。', 'wp-easy-mail' )
 				);
 				?>
 			</section>
@@ -302,6 +307,83 @@ class WPEM_Forms {
 	}
 
 	/**
+	 * 输出表单模板选择与样式预览。
+	 *
+	 * @param string $current     当前模板。
+	 * @param string $theme_color 主题色。
+	 * @param string $submit_text 按钮文案。
+	 * @return void
+	 */
+	private function render_template_picker( $current, $theme_color, $submit_text ) {
+		$current     = WPEM_Form_Templates::sanitize( $current );
+		$theme_color = WPEM_Form_Types::sanitize_theme_color( $theme_color );
+		?>
+		<div class="wpem-row wpem-template-row">
+			<span class="wpem-row-label"><?php esc_html_e( '表单模板', 'wp-easy-mail' ); ?></span>
+			<div class="wpem-template-picker" data-theme-color="<?php echo esc_attr( $theme_color ); ?>">
+				<?php foreach ( WPEM_Form_Templates::get_templates() as $slug => $template ) : ?>
+					<label class="wpem-template-option <?php echo $slug === $current ? 'is-selected' : ''; ?>">
+						<span class="wpem-template-option-head">
+							<input
+								type="radio"
+								name="wpem_settings[form_template]"
+								value="<?php echo esc_attr( $slug ); ?>"
+								<?php checked( $current, $slug ); ?>
+							>
+							<strong><?php echo esc_html( $template['label'] ); ?></strong>
+						</span>
+						<span class="description"><?php echo esc_html( $template['description'] ); ?></span>
+						<div
+							class="wpem-template-preview wpem-form-wrap wpem-template-<?php echo esc_attr( $slug ); ?>"
+							style="--wpem-accent: <?php echo esc_attr( $theme_color ); ?>;"
+							aria-hidden="true"
+						>
+							<header class="wpem-form-header">
+								<h2><?php esc_html_e( '联系我们', 'wp-easy-mail' ); ?></h2>
+								<div class="wpem-form-description">
+									<p><?php esc_html_e( '我们期待您的回复。', 'wp-easy-mail' ); ?></p>
+								</div>
+							</header>
+							<div class="wpem-fields">
+								<?php if ( 'card' === $slug ) : ?>
+									<div class="wpem-fields-row">
+										<div class="wpem-field">
+											<label><?php esc_html_e( '姓名', 'wp-easy-mail' ); ?> <span class="wpem-required">*</span></label>
+											<input type="text" disabled placeholder="<?php esc_attr_e( '请输入您的姓名', 'wp-easy-mail' ); ?>">
+										</div>
+										<div class="wpem-field">
+											<label><?php esc_html_e( '电话', 'wp-easy-mail' ); ?> <span class="wpem-required">*</span></label>
+											<input type="text" disabled placeholder="<?php esc_attr_e( '请输入您的电话号码', 'wp-easy-mail' ); ?>">
+										</div>
+									</div>
+								<?php else : ?>
+									<div class="wpem-field">
+										<label><?php esc_html_e( '姓名', 'wp-easy-mail' ); ?> <span class="wpem-required">*</span></label>
+										<input type="text" disabled placeholder="<?php esc_attr_e( '请输入您的姓名', 'wp-easy-mail' ); ?>">
+									</div>
+								<?php endif; ?>
+								<div class="wpem-field">
+									<label><?php esc_html_e( '电子邮件', 'wp-easy-mail' ); ?> <span class="wpem-required">*</span></label>
+									<input type="text" disabled placeholder="<?php esc_attr_e( '请输入您的电子邮件地址', 'wp-easy-mail' ); ?>">
+								</div>
+							</div>
+							<?php if ( 'card' === $slug ) : ?>
+								<div class="wpem-submit-wrap">
+									<button type="button" class="wpem-submit" tabindex="-1"><?php echo esc_html( $submit_text ); ?></button>
+								</div>
+							<?php else : ?>
+								<button type="button" class="wpem-submit" tabindex="-1"><?php echo esc_html( $submit_text ); ?></button>
+							<?php endif; ?>
+						</div>
+					</label>
+				<?php endforeach; ?>
+			</div>
+			<span class="description"><?php esc_html_e( '选择后可在下方预览样式；主题色变化会同步到预览按钮。', 'wp-easy-mail' ); ?></span>
+		</div>
+		<?php
+	}
+
+	/**
 	 * 输出多行输入项。
 	 *
 	 * @param string $key         配置键。
@@ -385,6 +467,7 @@ class WPEM_Forms {
 			'description'      => isset( $raw['description'] ) ? sanitize_textarea_field( $raw['description'] ) : $defaults['description'],
 			'submit_text'      => isset( $raw['submit_text'] ) ? sanitize_text_field( $raw['submit_text'] ) : $defaults['submit_text'],
 			'theme_color'      => isset( $raw['theme_color'] ) ? WPEM_Form_Types::sanitize_theme_color( $raw['theme_color'] ) : $defaults['theme_color'],
+			'form_template'    => isset( $raw['form_template'] ) ? WPEM_Form_Templates::sanitize( $raw['form_template'] ) : $defaults['form_template'],
 			'email_to'         => isset( $raw['email_to'] ) ? sanitize_text_field( $raw['email_to'] ) : $defaults['email_to'],
 			'email_subject'    => isset( $raw['email_subject'] ) ? sanitize_text_field( $raw['email_subject'] ) : $defaults['email_subject'],
 			'email_message'    => isset( $raw['email_message'] ) ? wp_kses_post( $raw['email_message'] ) : $defaults['email_message'],

@@ -67,6 +67,79 @@
 	max-width: 120px;
 }
 
+.wpem-template-row {
+	align-items: stretch;
+}
+
+.wpem-template-picker {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+	gap: 16px;
+}
+
+.wpem-template-option {
+	display: block;
+	padding: 14px;
+	border: 2px solid #dcdcde;
+	border-radius: 8px;
+	background: #fff;
+	cursor: pointer;
+}
+
+.wpem-template-option.is-selected {
+	border-color: #2271b1;
+	box-shadow: 0 0 0 1px #2271b1;
+}
+
+.wpem-template-option-head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 6px;
+}
+
+.wpem-template-option .description {
+	display: block;
+	margin-bottom: 12px;
+}
+
+.wpem-template-preview {
+	pointer-events: none;
+	max-width: none !important;
+	transform: scale(0.92);
+	transform-origin: top left;
+	width: 108%;
+}
+
+.wpem-template-preview .wpem-form-header {
+	margin-bottom: 16px;
+}
+
+.wpem-template-preview .wpem-form-header h2 {
+	font-size: 1.25rem !important;
+}
+
+.wpem-template-preview.wpem-template-card {
+	padding: 16px !important;
+	border-radius: 1.5rem !important;
+}
+
+.wpem-template-preview .wpem-fields {
+	gap: 12px !important;
+}
+
+.wpem-template-preview .wpem-field input {
+	min-height: 40px !important;
+	padding: 10px 12px !important;
+}
+
+.wpem-template-preview .wpem-submit {
+	margin-top: 14px !important;
+	min-height: 40px;
+	height: auto !important;
+	font-size: 0.9rem !important;
+}
+
 .wpem-field-config {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
