@@ -19,8 +19,17 @@ foreach ( $fields as $key => $definition ) {
 	}
 }
 
-$has_name_phone_row = in_array( 'name', $visible_keys, true ) && in_array( 'phone', $visible_keys, true );
-$rendered_keys      = array();
+/**
+ * 双列配对：姓名+公司、邮箱+电话；仅一方可见时仍单独输出该字段。
+ *
+ * @var array<int, array<int, string>>
+ */
+$pair_rows = array(
+	array( 'name', 'company' ),
+	array( 'email', 'phone' ),
+);
+
+$rendered_keys = array();
 ?>
 <section
 	class="wpem-form-wrap wpem-template-card"
@@ -63,16 +72,37 @@ $rendered_keys      = array();
 		</div>
 
 		<div class="wpem-fields">
-			<?php if ( $has_name_phone_row ) : ?>
-				<div class="wpem-fields-row">
+			<?php foreach ( $pair_rows as $pair ) : ?>
+				<?php
+				$pair_visible = array_values(
+					array_filter(
+						$pair,
+						static function ( $key ) use ( $visible_keys ) {
+							return in_array( $key, $visible_keys, true );
+						}
+					)
+				);
+				if ( empty( $pair_visible ) ) {
+					continue;
+				}
+				?>
+				<?php if ( count( $pair_visible ) > 1 ) : ?>
+					<div class="wpem-fields-row">
+						<?php foreach ( $pair_visible as $key ) : ?>
+							<?php
+							WPEM_Form_Templates::render_field( $key, $fields[ $key ], $settings, $instance_id );
+							$rendered_keys[] = $key;
+							?>
+						<?php endforeach; ?>
+					</div>
+				<?php else : ?>
 					<?php
-					WPEM_Form_Templates::render_field( 'name', $fields['name'], $settings, $instance_id );
-					WPEM_Form_Templates::render_field( 'phone', $fields['phone'], $settings, $instance_id );
-					$rendered_keys[] = 'name';
-					$rendered_keys[] = 'phone';
+					$key = $pair_visible[0];
+					WPEM_Form_Templates::render_field( $key, $fields[ $key ], $settings, $instance_id );
+					$rendered_keys[] = $key;
 					?>
-				</div>
-			<?php endif; ?>
+				<?php endif; ?>
+			<?php endforeach; ?>
 
 			<?php foreach ( $fields as $key => $definition ) : ?>
 				<?php

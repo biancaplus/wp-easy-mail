@@ -28,7 +28,7 @@ class WPEM_Form_Templates {
 			),
 			'card'    => array(
 				'label'       => __( '卡片', 'wp-easy-mail' ),
-				'description' => __( '圆角卡片与双列姓名/电话，参考联系我们页样式。', 'wp-easy-mail' ),
+				'description' => __( '圆角卡片布局；宽屏时姓名/公司、邮箱/电话各占一行，小屏自动换行。', 'wp-easy-mail' ),
 				'file'        => 'card.php',
 			),
 		);

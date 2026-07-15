@@ -352,6 +352,16 @@ class WPEM_Forms {
 											<input type="text" disabled placeholder="<?php esc_attr_e( '请输入您的姓名', 'wp-easy-mail' ); ?>">
 										</div>
 										<div class="wpem-field">
+											<label><?php esc_html_e( '公司', 'wp-easy-mail' ); ?></label>
+											<input type="text" disabled placeholder="<?php esc_attr_e( '请输入公司名称', 'wp-easy-mail' ); ?>">
+										</div>
+									</div>
+									<div class="wpem-fields-row">
+										<div class="wpem-field">
+											<label><?php esc_html_e( '电子邮件', 'wp-easy-mail' ); ?> <span class="wpem-required">*</span></label>
+											<input type="text" disabled placeholder="<?php esc_attr_e( '请输入您的电子邮件地址', 'wp-easy-mail' ); ?>">
+										</div>
+										<div class="wpem-field">
 											<label><?php esc_html_e( '电话', 'wp-easy-mail' ); ?> <span class="wpem-required">*</span></label>
 											<input type="text" disabled placeholder="<?php esc_attr_e( '请输入您的电话号码', 'wp-easy-mail' ); ?>">
 										</div>
@@ -361,11 +371,11 @@ class WPEM_Forms {
 										<label><?php esc_html_e( '姓名', 'wp-easy-mail' ); ?> <span class="wpem-required">*</span></label>
 										<input type="text" disabled placeholder="<?php esc_attr_e( '请输入您的姓名', 'wp-easy-mail' ); ?>">
 									</div>
+									<div class="wpem-field">
+										<label><?php esc_html_e( '电子邮件', 'wp-easy-mail' ); ?> <span class="wpem-required">*</span></label>
+										<input type="text" disabled placeholder="<?php esc_attr_e( '请输入您的电子邮件地址', 'wp-easy-mail' ); ?>">
+									</div>
 								<?php endif; ?>
-								<div class="wpem-field">
-									<label><?php esc_html_e( '电子邮件', 'wp-easy-mail' ); ?> <span class="wpem-required">*</span></label>
-									<input type="text" disabled placeholder="<?php esc_attr_e( '请输入您的电子邮件地址', 'wp-easy-mail' ); ?>">
-								</div>
 							</div>
 							<?php if ( 'card' === $slug ) : ?>
 								<div class="wpem-submit-wrap">
