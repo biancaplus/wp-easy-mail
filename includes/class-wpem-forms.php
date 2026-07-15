@@ -148,7 +148,13 @@ class WPEM_Forms {
 					)
 				);
 				$this->render_text_input( 'email_subject', __( '邮件主题', 'wp-easy-mail' ), $settings['email_subject'] );
-				$this->render_textarea( 'email_message', __( '邮件正文', 'wp-easy-mail' ), $settings['email_message'], __( '支持字段占位符以及 [date]、[ip]。', 'wp-easy-mail' ), 9 );
+				$this->render_textarea(
+					'email_message',
+					__( '邮件正文（备用）', 'wp-easy-mail' ),
+					$settings['email_message'],
+					__( '实际发送的提交详情会按当前表单类型的可见字段自动生成；此处仅作为参考预览或备用模板，切换类型后请同步检查字段设置。', 'wp-easy-mail' ),
+					9
+				);
 				$this->render_text_input( 'email_from', __( '发件人邮箱', 'wp-easy-mail' ), $settings['email_from'], __( '留空时使用 WordPress 默认发件人。', 'wp-easy-mail' ) );
 				$this->render_text_input(
 					'email_from_name',

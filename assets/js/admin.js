@@ -1,7 +1,7 @@
 /**
  * WP Easy Mail 后台交互。
  */
-(function () {
+(function ($) {
 	'use strict';
 
 	/**
@@ -54,7 +54,9 @@
 		if (typeSelect) {
 			switchFieldGroup(root, typeSelect.value);
 			typeSelect.addEventListener('change', function () {
-				switchFieldGroup(root, typeSelect.value);
+				var nextType = typeSelect.value;
+				switchFieldGroup(root, nextType);
+				syncEmailMessageTemplate(root, nextType);
 			});
 		}
 
@@ -84,6 +86,31 @@
 		});
 
 		bindThemeColorInputs(root);
+	}
+
+	/**
+	 * 切换表单类型时同步默认邮件正文模板。
+	 *
+	 * @param {HTMLElement} root 设置根元素。
+	 * @param {string} type 表单类型。
+	 * @returns {void}
+	 */
+	function syncEmailMessageTemplate(root, type) {
+		var textarea = root.querySelector('textarea[name="wpem_settings[email_message]"]');
+		var templates = (window.WPEasyMailAdmin && WPEasyMailAdmin.emailMessageByType) || {};
+		if (!textarea || !templates[type]) {
+			return;
+		}
+
+		var current = textarea.value.replace(/\r\n/g, '\n').trim();
+		var isStock = Object.keys(templates).some(function (key) {
+			return templates[key].replace(/\r\n/g, '\n').trim() === current;
+		});
+
+		// 仅在当前仍是某类型的默认模板时自动替换，避免覆盖用户自定义正文。
+		if ('' === current || isStock) {
+			textarea.value = templates[type];
+		}
 	}
 
 	/**
@@ -117,19 +144,123 @@
 	}
 
 	/**
+	 * 更新标题未读角标。
+	 *
+	 * @param {number} count 未读数量。
+	 * @returns {void}
+	 */
+	function updateUnreadBadge(count) {
+		var badge = $('.wpem-unread-badge');
+		if (count > 0) {
+			if (badge.length) {
+				badge.find('.update-count').text(count);
+			}
+			return;
+		}
+		badge.remove();
+	}
+
+	/**
+	 * 将某行标记为已读的 UI 状态。
+	 *
+	 * @param {JQuery} row 行元素。
+	 * @param {string} operatorName 操作人。
+	 * @returns {void}
+	 */
+	function markRowReadUi(row, operatorName) {
+		row.removeClass('wpem-row-unread');
+		row.find('.wpem-status-cell').html('<span class="wpem-status-read">' + (WPEasyMailAdmin.statusRead || '已读') + '</span>');
+		row.find('.wpem-mark-read-btn').remove();
+		row.find('.wpem-action-sep').first().remove();
+		if (operatorName) {
+			row.find('.wpem-operator-cell').text(operatorName);
+		}
+	}
+
+	/**
+	 * 初始化提交记录页交互。
+	 *
+	 * @returns {void}
+	 */
+	function initializeSubmissionsPage() {
+		var modal = $('#wpem-message-modal');
+		if (!modal.length) {
+			return;
+		}
+
+		var content = $('#wpem-message-modal-content');
+
+		/**
+		 * 关闭弹窗。
+		 *
+		 * @returns {void}
+		 */
+		function closeModal() {
+			modal.attr('hidden', 'hidden');
+			content.text('');
+		}
+
+		$('.wpem-view-message').on('click', function (event) {
+			event.preventDefault();
+			var btn = $(this);
+			var rowId = btn.data('id');
+			var fullMessage = btn.siblings('.wpem-full-message').text();
+			var row = $('#wpem-row-' + rowId);
+
+			content.text(fullMessage);
+			modal.removeAttr('hidden');
+
+			if (!row.find('.wpem-status-unread').length) {
+				return;
+			}
+
+			$.post(WPEasyMailAdmin.ajaxUrl, {
+				action: 'wpem_mark_submission_read',
+				nonce: WPEasyMailAdmin.markReadNonce,
+				id: rowId
+			}).done(function (response) {
+				if (!response || !response.success) {
+					return;
+				}
+				markRowReadUi(row, response.data.operator_name || '');
+				updateUnreadBadge(response.data.unread_count || 0);
+			});
+		});
+
+		modal.on('click', '.wpem-message-modal-close', closeModal);
+		modal.on('click', function (event) {
+			if (event.target === modal.get(0)) {
+				closeModal();
+			}
+		});
+
+		$(document).on('keydown.wpemModal', function (event) {
+			if ('Escape' === event.key && !modal.is('[hidden]')) {
+				closeModal();
+			}
+		});
+
+		$('.wpem-mark-read-btn').on('click', function (event) {
+			if (!window.confirm(WPEasyMailAdmin.confirmRead || '标记为已读？')) {
+				event.preventDefault();
+			}
+		});
+
+		$('.wpem-delete-link').on('click', function (event) {
+			if (!window.confirm(WPEasyMailAdmin.confirmDelete || '确定删除此记录吗？')) {
+				event.preventDefault();
+			}
+		});
+	}
+
+	/**
 	 * 初始化后台页面。
 	 *
 	 * @returns {void}
 	 */
 	function initialize() {
 		document.querySelectorAll('.wpem-settings').forEach(initializeSettings);
-		document.querySelectorAll('.wpem-delete-link').forEach(function (link) {
-			link.addEventListener('click', function (event) {
-				if (!window.confirm('确定删除此记录吗？')) {
-					event.preventDefault();
-				}
-			});
-		});
+		initializeSubmissionsPage();
 	}
 
 	if ('loading' === document.readyState) {
@@ -137,4 +268,4 @@
 	} else {
 		initialize();
 	}
-})();
+})(jQuery);

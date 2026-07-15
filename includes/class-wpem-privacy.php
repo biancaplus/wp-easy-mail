@@ -35,7 +35,7 @@ class WPEM_Privacy {
 			return;
 		}
 
-		$content  = '<p>' . esc_html__( '当访客提交联系或报价表单时，本站会保存表单中填写的姓名、邮箱、电话、公司及消息内容，同时保存 IP 地址、浏览器 User-Agent 和提交时间。数据用于回复咨询、防止滥用及记录邮件发送状态。', 'wp-easy-mail' ) . '</p>';
+		$content  = '<p>' . esc_html__( '当访客提交联系或报价表单时，本站会保存表单中填写的姓名、邮箱、电话、公司及消息内容，以及提交时间。系统还可能短时或内部记录 IP 与浏览器 User-Agent，仅用于防止滥用（如提交频率限制），不会在后台提交记录界面中展示。', 'wp-easy-mail' ) . '</p>';
 		$content .= '<p>' . esc_html__( '表单启用 reCAPTCHA v3 时，提交过程还会连接 Google reCAPTCHA 服务。请根据实际使用情况在隐私政策中说明数据保留期限及第三方服务。', 'wp-easy-mail' ) . '</p>';
 		wp_add_privacy_policy_content( 'WP Easy Mail', wp_kses_post( wpautop( $content ) ) );
 	}

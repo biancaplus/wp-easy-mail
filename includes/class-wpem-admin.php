@@ -24,6 +24,7 @@ class WPEM_Admin {
 		add_action( 'admin_menu', array( $this, 'adjust_menu_items' ), 999 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_post_wpem_submission_action', array( $this, 'handle_submission_action' ) );
+		add_action( 'wp_ajax_wpem_mark_submission_read', array( $this, 'ajax_mark_submission_read' ) );
 	}
 
 	/**
@@ -79,7 +80,7 @@ class WPEM_Admin {
 	 * @return void
 	 */
 	public function enqueue_assets( $hook ) {
-		$screen = get_current_screen();
+		$screen         = get_current_screen();
 		$is_form_screen = $screen && 'wpem_form' === $screen->post_type;
 		$is_plugin_page = false !== strpos( $hook, 'wpem' );
 		if ( ! $is_form_screen && ! $is_plugin_page ) {
@@ -87,7 +88,23 @@ class WPEM_Admin {
 		}
 
 		wp_enqueue_style( 'wpem-admin', WPEM_URL . 'assets/css/admin.css', array(), WPEM_VERSION );
-		wp_enqueue_script( 'wpem-admin', WPEM_URL . 'assets/js/admin.js', array(), WPEM_VERSION, true );
+		wp_enqueue_script( 'wpem-admin', WPEM_URL . 'assets/js/admin.js', array( 'jquery' ), WPEM_VERSION, true );
+		wp_localize_script(
+			'wpem-admin',
+			'WPEasyMailAdmin',
+			array(
+				'ajaxUrl'           => admin_url( 'admin-ajax.php' ),
+				'markReadNonce'     => wp_create_nonce( 'wpem_mark_submission_read' ),
+				'confirmRead'       => __( '标记为已读？', 'wp-easy-mail' ),
+				'confirmDelete'     => __( '确定删除此记录吗？', 'wp-easy-mail' ),
+				'statusRead'        => __( '已读', 'wp-easy-mail' ),
+				'statusUnread'      => __( '未读', 'wp-easy-mail' ),
+				'emailMessageByType' => array(
+					'contact_us' => WPEM_Form_Types::get_default_email_message( 'contact_us' ),
+					'get_quote'  => WPEM_Form_Types::get_default_email_message( 'get_quote' ),
+				),
+			)
+		);
 	}
 
 	/**
@@ -130,78 +147,374 @@ class WPEM_Admin {
 			wp_die( esc_html__( '您无权访问此页面。', 'wp-easy-mail' ) );
 		}
 
-		$submission_id = isset( $_GET['submission_id'] ) ? absint( $_GET['submission_id'] ) : 0;
-		$list_table    = new WPEM_Submissions_List_Table();
-		$list_table->prepare_items();
+		global $wpdb;
+		$table = $wpdb->prefix . 'wp_easy_mail_submissions';
+
+		$this->process_submissions_page_actions( $table );
+
+		$submissions  = $wpdb->get_results( "SELECT * FROM {$table} ORDER BY submitted_at DESC", ARRAY_A );
+		$unread_count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE status = 'unread'" );
 		?>
-		<div class="wrap">
-			<h1><?php esc_html_e( '提交记录', 'wp-easy-mail' ); ?></h1>
-			<?php
-			if ( $submission_id ) {
-				$this->render_submission_detail( $submission_id );
-			}
-			?>
-			<form method="get">
-				<input type="hidden" name="page" value="wpem-submissions">
-				<?php $list_table->display(); ?>
-			</form>
+		<div class="wrap wpem-submissions-wrap">
+			<h1>
+				<?php esc_html_e( '提交记录', 'wp-easy-mail' ); ?>
+				<?php if ( $unread_count > 0 ) : ?>
+					<span class="wpem-unread-badge update-plugins count-<?php echo esc_attr( (string) $unread_count ); ?>">
+						<span class="update-count"><?php echo esc_html( (string) $unread_count ); ?></span>
+					</span>
+				<?php endif; ?>
+			</h1>
+			<?php $this->maybe_render_submissions_notice(); ?>
+
+			<?php if ( empty( $submissions ) ) : ?>
+				<p><?php esc_html_e( '暂无提交记录', 'wp-easy-mail' ); ?></p>
+			<?php else : ?>
+				<table class="wp-list-table widefat fixed striped wpem-submissions-table">
+					<thead>
+						<tr>
+							<th style="width:5%"><?php esc_html_e( 'ID', 'wp-easy-mail' ); ?></th>
+							<th style="width:10%"><?php esc_html_e( '表单类型', 'wp-easy-mail' ); ?></th>
+							<th style="width:9%"><?php esc_html_e( '姓名', 'wp-easy-mail' ); ?></th>
+							<th style="width:10%"><?php esc_html_e( '电话', 'wp-easy-mail' ); ?></th>
+							<th style="width:14%"><?php esc_html_e( '邮箱', 'wp-easy-mail' ); ?></th>
+							<th style="width:20%"><?php esc_html_e( '信息', 'wp-easy-mail' ); ?></th>
+							<th style="width:11%"><?php esc_html_e( '提交时间', 'wp-easy-mail' ); ?></th>
+							<th style="width:5%"><?php esc_html_e( '状态', 'wp-easy-mail' ); ?></th>
+							<th style="width:7%"><?php esc_html_e( '邮件', 'wp-easy-mail' ); ?></th>
+							<th style="width:7%"><?php esc_html_e( '操作人', 'wp-easy-mail' ); ?></th>
+							<th style="width:8%"><?php esc_html_e( '操作', 'wp-easy-mail' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $submissions as $submission ) : ?>
+							<?php
+							$fields       = $this->decode_field_data( $submission['field_data'] );
+							$message_text = $this->get_message_preview( $fields, $submission['form_type'] );
+							$full_message = $this->get_full_message_text( $submission, $fields );
+							$row_class    = 'unread' === $submission['status'] ? 'wpem-row-unread' : '';
+							$type_class   = 'get_quote' === $submission['form_type'] ? 'wpem-tag-quote' : 'wpem-tag-contact';
+							?>
+							<tr id="wpem-row-<?php echo esc_attr( (string) $submission['id'] ); ?>" class="<?php echo esc_attr( $row_class ); ?>">
+								<td><?php echo esc_html( (string) $submission['id'] ); ?></td>
+								<td>
+									<span class="wpem-type-tag <?php echo esc_attr( $type_class ); ?>">
+										<?php echo esc_html( WPEM_Form_Types::get_type_label( $submission['form_type'] ) ); ?>
+									</span>
+								</td>
+								<td><?php echo esc_html( isset( $fields['name'] ) ? $fields['name'] : '—' ); ?></td>
+								<td><?php echo esc_html( isset( $fields['phone'] ) ? $fields['phone'] : '—' ); ?></td>
+								<td><?php echo esc_html( isset( $fields['email'] ) ? $fields['email'] : '—' ); ?></td>
+								<td>
+									<a href="#" class="wpem-view-message" data-id="<?php echo esc_attr( (string) $submission['id'] ); ?>">
+										<?php echo esc_html( $message_text ? wp_trim_words( $message_text, 20 ) : __( '（无内容）', 'wp-easy-mail' ) ); ?>
+									</a>
+									<div class="wpem-full-message" hidden><?php echo esc_html( $full_message ); ?></div>
+								</td>
+								<td><?php echo esc_html( $submission['submitted_at'] ); ?></td>
+								<td class="wpem-status-cell">
+									<?php if ( 'unread' === $submission['status'] ) : ?>
+										<span class="wpem-status-unread"><?php esc_html_e( '未读', 'wp-easy-mail' ); ?></span>
+									<?php else : ?>
+										<span class="wpem-status-read"><?php esc_html_e( '已读', 'wp-easy-mail' ); ?></span>
+									<?php endif; ?>
+								</td>
+								<td><?php echo $this->render_email_status_html( $submission['email_status'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></td>
+								<td class="wpem-operator-cell">
+									<?php
+									echo esc_html(
+										! empty( $submission['operator_name'] )
+											? $submission['operator_name']
+											: '—'
+									);
+									?>
+								</td>
+								<td class="wpem-actions-cell">
+									<?php
+									$mark_url = wp_nonce_url(
+										add_query_arg(
+											array(
+												'page'   => 'wpem-submissions',
+												'action' => 'mark_read',
+												'id'     => absint( $submission['id'] ),
+											),
+											admin_url( 'admin.php' )
+										),
+										'wpem_submission_' . absint( $submission['id'] )
+									);
+									$delete_url = wp_nonce_url(
+										add_query_arg(
+											array(
+												'page'   => 'wpem-submissions',
+												'action' => 'delete',
+												'id'     => absint( $submission['id'] ),
+											),
+											admin_url( 'admin.php' )
+										),
+										'wpem_submission_' . absint( $submission['id'] )
+									);
+									?>
+									<?php if ( 'unread' === $submission['status'] ) : ?>
+										<a href="<?php echo esc_url( $mark_url ); ?>" class="wpem-mark-read-btn"><?php esc_html_e( '已读', 'wp-easy-mail' ); ?></a>
+										<span class="wpem-action-sep">|</span>
+									<?php endif; ?>
+									<a href="<?php echo esc_url( $delete_url ); ?>" class="wpem-delete-link"><?php esc_html_e( '删除', 'wp-easy-mail' ); ?></a>
+								</td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			<?php endif; ?>
+
+			<div id="wpem-message-modal" class="wpem-message-modal" hidden>
+				<div class="wpem-message-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="wpem-message-modal-title">
+					<button type="button" class="wpem-message-modal-close" aria-label="<?php esc_attr_e( '关闭', 'wp-easy-mail' ); ?>">&times;</button>
+					<h2 id="wpem-message-modal-title"><?php esc_html_e( '完整信息', 'wp-easy-mail' ); ?></h2>
+					<div id="wpem-message-modal-content" class="wpem-message-modal-content"></div>
+				</div>
+			</div>
 		</div>
 		<?php
 	}
 
 	/**
-	 * 输出提交详情。
+	 * 处理提交记录页的已读 / 删除操作。
 	 *
-	 * @param int $submission_id 提交 ID。
+	 * @param string $table 表名。
 	 * @return void
 	 */
-	private function render_submission_detail( $submission_id ) {
-		global $wpdb;
-
-		$table = $wpdb->prefix . 'wp_easy_mail_submissions';
-		$row   = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $submission_id ), ARRAY_A );
-		if ( ! $row ) {
-			echo '<div class="notice notice-error"><p>' . esc_html__( '提交记录不存在。', 'wp-easy-mail' ) . '</p></div>';
+	private function process_submissions_page_actions( $table ) {
+		if ( empty( $_GET['action'] ) || empty( $_GET['id'] ) ) {
 			return;
 		}
 
-		$fields      = json_decode( $row['field_data'], true );
-		$fields      = is_array( $fields ) ? $fields : array();
-		$settings    = WPEM_Forms::get_settings( (int) $row['form_id'] );
-		$definitions = WPEM_Form_Types::get_fields( $row['form_type'] );
-		?>
-		<section class="wpem-detail">
-			<h2>
-				<?php
-				echo esc_html(
-					sprintf(
-						__( '提交 #%1$d · %2$s', 'wp-easy-mail' ),
-						(int) $row['id'],
-						WPEM_Form_Types::get_type_label( $row['form_type'] )
-					)
-				);
-				?>
-			</h2>
-			<table class="widefat striped">
-				<tbody>
-					<?php foreach ( $definitions as $key => $definition ) : ?>
-						<?php
-						$field_settings = isset( $settings['fields'][ $key ] ) ? $settings['fields'][ $key ] : $definition;
-						if ( ! WPEM_Form_Types::is_field_visible( $field_settings, $definition ) ) {
-							continue;
-						}
-						?>
-						<tr>
-							<th><?php echo esc_html( isset( $settings['fields'][ $key ]['label'] ) ? $settings['fields'][ $key ]['label'] : $definition['label'] ); ?></th>
-							<td class="wpem-detail-value"><?php echo nl2br( esc_html( isset( $fields[ $key ] ) ? $fields[ $key ] : '' ) ); ?></td>
-						</tr>
-					<?php endforeach; ?>
-					<tr><th><?php esc_html_e( 'IP 地址', 'wp-easy-mail' ); ?></th><td><?php echo esc_html( $row['ip_address'] ); ?></td></tr>
-					<tr><th><?php esc_html_e( '提交时间', 'wp-easy-mail' ); ?></th><td><?php echo esc_html( $row['submitted_at'] ); ?></td></tr>
-				</tbody>
-			</table>
-		</section>
-		<?php
+		$action = sanitize_key( wp_unslash( $_GET['action'] ) );
+		$id     = absint( $_GET['id'] );
+		if ( ! in_array( $action, array( 'mark_read', 'delete' ), true ) || ! $id ) {
+			return;
+		}
+
+		check_admin_referer( 'wpem_submission_' . $id );
+		global $wpdb;
+
+		if ( 'mark_read' === $action ) {
+			$this->mark_submission_read( $table, $id );
+			$notice = 'marked';
+		} elseif ( 'delete' === $action ) {
+			$this->record_operator_before_delete( $table, $id );
+			$wpdb->delete( $table, array( 'id' => $id ), array( '%d' ) );
+			$notice = 'deleted';
+		} else {
+			return;
+		}
+
+		wp_safe_redirect(
+			add_query_arg(
+				array(
+					'page'         => 'wpem-submissions',
+					'wpem_notice'  => $notice,
+				),
+				admin_url( 'admin.php' )
+			)
+		);
+		exit;
+	}
+
+	/**
+	 * 输出操作成功提示。
+	 *
+	 * @return void
+	 */
+	private function maybe_render_submissions_notice() {
+		if ( empty( $_GET['wpem_notice'] ) ) {
+			return;
+		}
+
+		$notice = sanitize_key( wp_unslash( $_GET['wpem_notice'] ) );
+		if ( 'marked' === $notice ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( '已标记为已读', 'wp-easy-mail' ) . '</p></div>';
+		}
+		if ( 'deleted' === $notice ) {
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( '记录已删除', 'wp-easy-mail' ) . '</p></div>';
+		}
+	}
+
+	/**
+	 * AJAX：查看信息时标记已读并记录操作人。
+	 *
+	 * @return void
+	 */
+	public function ajax_mark_submission_read() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( '无权操作', 'wp-easy-mail' ) ), 403 );
+		}
+
+		check_ajax_referer( 'wpem_mark_submission_read', 'nonce' );
+
+		$id = isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0;
+		if ( ! $id ) {
+			wp_send_json_error( array( 'message' => __( 'ID 无效', 'wp-easy-mail' ) ), 400 );
+		}
+
+		global $wpdb;
+		$table    = $wpdb->prefix . 'wp_easy_mail_submissions';
+		$operator = $this->mark_submission_read( $table, $id );
+		$unread   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE status = 'unread'" );
+
+		wp_send_json_success(
+			array(
+				'unread_count'  => $unread,
+				'operator_name' => $operator['operator_name'],
+			)
+		);
+	}
+
+	/**
+	 * 标记已读并写入操作人。
+	 *
+	 * @param string $table 表名。
+	 * @param int    $id    提交 ID。
+	 * @return array{operator_id:int,operator_name:string}
+	 */
+	private function mark_submission_read( $table, $id ) {
+		global $wpdb;
+		$operator = $this->get_current_operator();
+		$wpdb->update(
+			$table,
+			array(
+				'status'        => 'read',
+				'operator_id'   => $operator['operator_id'],
+				'operator_name' => $operator['operator_name'],
+			),
+			array( 'id' => $id ),
+			array( '%s', '%d', '%s' ),
+			array( '%d' )
+		);
+		return $operator;
+	}
+
+	/**
+	 * 删除前写入操作人，便于审计日志扩展；当前行会被删除。
+	 *
+	 * @param string $table 表名。
+	 * @param int    $id    提交 ID。
+	 * @return void
+	 */
+	private function record_operator_before_delete( $table, $id ) {
+		global $wpdb;
+		$operator = $this->get_current_operator();
+		$wpdb->update(
+			$table,
+			array(
+				'operator_id'   => $operator['operator_id'],
+				'operator_name' => $operator['operator_name'],
+			),
+			array( 'id' => $id ),
+			array( '%d', '%s' ),
+			array( '%d' )
+		);
+	}
+
+	/**
+	 * 获取当前登录操作人信息。
+	 *
+	 * @return array{operator_id:int,operator_name:string}
+	 */
+	private function get_current_operator() {
+		$user = wp_get_current_user();
+		$name = $user->display_name ? $user->display_name : $user->user_login;
+		return array(
+			'operator_id'   => (int) $user->ID,
+			'operator_name' => (string) $name,
+		);
+	}
+
+	/**
+	 * 解析字段 JSON。
+	 *
+	 * @param string $raw 原始 JSON。
+	 * @return array<string, string>
+	 */
+	private function decode_field_data( $raw ) {
+		$fields = json_decode( (string) $raw, true );
+		return is_array( $fields ) ? $fields : array();
+	}
+
+	/**
+	 * 获取列表信息列摘要。
+	 *
+	 * @param array<string, string> $fields    字段值。
+	 * @param string                $form_type 表单类型。
+	 * @return string
+	 */
+	private function get_message_preview( $fields, $form_type ) {
+		if ( 'get_quote' === $form_type ) {
+			return isset( $fields['requirements'] ) ? (string) $fields['requirements'] : '';
+		}
+		return isset( $fields['message'] ) ? (string) $fields['message'] : '';
+	}
+
+	/**
+	 * 生成弹窗完整信息文本。
+	 *
+	 * @param array<string, mixed>  $submission 提交记录。
+	 * @param array<string, string> $fields     字段值。
+	 * @return string
+	 */
+	private function get_full_message_text( $submission, $fields ) {
+		$settings    = WPEM_Forms::get_settings( (int) $submission['form_id'] );
+		$definitions = WPEM_Form_Types::get_fields( $submission['form_type'] );
+		$lines       = array();
+
+		$lines[] = sprintf(
+			'%s：%s',
+			__( '表单类型', 'wp-easy-mail' ),
+			WPEM_Form_Types::get_type_label( $submission['form_type'] )
+		);
+		$form_title = get_the_title( (int) $submission['form_id'] );
+		$lines[]    = sprintf(
+			'%s：%s',
+			__( '表单', 'wp-easy-mail' ),
+			$form_title ? $form_title : __( '已删除的表单', 'wp-easy-mail' )
+		);
+
+		foreach ( $definitions as $key => $definition ) {
+			$field_settings = isset( $settings['fields'][ $key ] ) ? $settings['fields'][ $key ] : $definition;
+			if ( ! WPEM_Form_Types::is_field_visible( $field_settings, $definition ) ) {
+				continue;
+			}
+			$label   = isset( $field_settings['label'] ) ? $field_settings['label'] : $definition['label'];
+			$value   = isset( $fields[ $key ] ) ? $fields[ $key ] : '';
+			$lines[] = $label . '：' . $value;
+		}
+
+		$lines[] = __( '提交时间', 'wp-easy-mail' ) . '：' . $submission['submitted_at'];
+
+		return implode( "\n", $lines );
+	}
+
+	/**
+	 * 渲染邮件状态 HTML。
+	 *
+	 * @param string $status 状态。
+	 * @return string
+	 */
+	private function render_email_status_html( $status ) {
+		$map = array(
+			'sent'    => array( 'wpem-email-sent', __( '发送成功', 'wp-easy-mail' ) ),
+			'failed'  => array( 'wpem-email-failed', __( '发送失败', 'wp-easy-mail' ) ),
+			'sending' => array( 'wpem-email-sending', __( '发送中', 'wp-easy-mail' ) ),
+			'pending' => array( 'wpem-email-pending', __( '等待发送', 'wp-easy-mail' ) ),
+		);
+
+		if ( ! isset( $map[ $status ] ) ) {
+			return '<span class="wpem-email-unknown">' . esc_html__( '未知', 'wp-easy-mail' ) . '</span>';
+		}
+
+		return sprintf(
+			'<span class="%1$s">%2$s</span>',
+			esc_attr( $map[ $status ][0] ),
+			esc_html( $map[ $status ][1] )
+		);
 	}
 
 	/**
@@ -275,7 +588,7 @@ class WPEM_Admin {
 	}
 
 	/**
-	 * 处理标记已读或删除操作。
+	 * 兼容旧版 admin-post 操作入口。
 	 *
 	 * @return void
 	 */
@@ -291,9 +604,10 @@ class WPEM_Admin {
 		global $wpdb;
 		$table = $wpdb->prefix . 'wp_easy_mail_submissions';
 		if ( 'read' === $operation ) {
-			$wpdb->update( $table, array( 'status' => 'read' ), array( 'id' => $id ), array( '%s' ), array( '%d' ) );
+			$this->mark_submission_read( $table, $id );
 		}
 		if ( 'delete' === $operation ) {
+			$this->record_operator_before_delete( $table, $id );
 			$wpdb->delete( $table, array( 'id' => $id ), array( '%d' ) );
 		}
 

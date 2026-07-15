@@ -206,12 +206,12 @@ class WPEM_Form_Types {
 	 * @param string $type 表单类型。
 	 * @return string
 	 */
-	private static function get_default_email_message( $type ) {
+	public static function get_default_email_message( $type ) {
 		if ( 'get_quote' === $type ) {
-			return "姓名：[name]\n邮箱：[email]\n电话：[phone]\n公司：[company]\n需求描述：[requirements]\n预算：[budget]\n提交时间：[date]";
+			return "姓名：[name]\n电子邮件：[email]\n电话：[phone]\n公司：[company]\n需求描述：[requirements]\n预算：[budget]\n提交时间：[date]";
 		}
 
-		return "姓名：[name]\n邮箱：[email]\n电话：[phone]\n公司：[company]\n留言：[message]\n提交时间：[date]";
+		return "姓名：[name]\n电子邮件：[email]\n电话：[phone]\n公司：[company]\n信息：[message]\n提交时间：[date]";
 	}
 
 	/**

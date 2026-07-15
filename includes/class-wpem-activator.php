@@ -17,7 +17,7 @@ class WPEM_Activator {
 	/**
 	 * 当前数据库结构版本。
 	 */
-	const DB_VERSION = '1.0.0';
+	const DB_VERSION = '1.1.0';
 
 	/**
 	 * 激活插件并创建数据表。
@@ -59,6 +59,8 @@ class WPEM_Activator {
 			email_status varchar(20) NOT NULL DEFAULT 'pending',
 			ip_address varchar(100) NOT NULL DEFAULT '',
 			user_agent text NOT NULL,
+			operator_id bigint(20) unsigned NOT NULL DEFAULT 0,
+			operator_name varchar(191) NOT NULL DEFAULT '',
 			submitted_at datetime NOT NULL,
 			PRIMARY KEY  (id),
 			KEY form_id (form_id),

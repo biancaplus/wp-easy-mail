@@ -155,7 +155,125 @@
 }
 
 .wpem-delete-link {
-	color: #b32d2e;
+	color: #d63638;
+}
+
+.wpem-unread-badge {
+	display: inline-block;
+	vertical-align: top;
+	box-sizing: border-box;
+	margin: 1px 0 -1px 2px;
+	padding: 0 5px;
+	min-width: 18px;
+	height: 18px;
+	border-radius: 9px;
+	background-color: #d63638;
+	color: #fff;
+	font-size: 11px;
+	line-height: 1.6;
+	text-align: center;
+}
+
+.wpem-submissions-table .wpem-row-unread {
+	background-color: #f0f8ff;
+}
+
+.wpem-submissions-table .wpem-view-message {
+	color: inherit;
+	text-decoration: none;
+	border-bottom: 1px dashed #999;
+}
+
+.wpem-submissions-table .wpem-view-message:hover {
+	color: #2271b1;
+	border-bottom-color: #2271b1;
+}
+
+.wpem-status-unread {
+	color: #d63638;
+	font-weight: 700;
+}
+
+.wpem-status-read {
+	color: #00a32a;
+}
+
+.wpem-email-sent {
+	color: #00a32a;
+	font-weight: 700;
+}
+
+.wpem-email-failed {
+	color: #d63638;
+	font-weight: 700;
+}
+
+.wpem-email-sending {
+	color: #d97706;
+	font-weight: 700;
+}
+
+.wpem-email-pending,
+.wpem-email-unknown {
+	color: #999;
+}
+
+.wpem-message-modal {
+	position: fixed;
+	z-index: 100000;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.5);
+}
+
+.wpem-message-modal[hidden] {
+	display: none !important;
+}
+
+.wpem-message-modal-dialog {
+	position: relative;
+	width: min(600px, 90%);
+	max-height: 80vh;
+	margin: 8% auto;
+	padding: 20px;
+	border: 1px solid #888;
+	border-radius: 5px;
+	background: #fff;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.wpem-message-modal-close {
+	position: absolute;
+	top: 10px;
+	right: 14px;
+	border: 0;
+	background: transparent;
+	color: #aaa;
+	font-size: 28px;
+	font-weight: 700;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.wpem-message-modal-close:hover,
+.wpem-message-modal-close:focus {
+	color: #000;
+}
+
+.wpem-message-modal-dialog h2 {
+	margin: 0 0 12px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #eee;
+}
+
+.wpem-message-modal-content {
+	max-height: 400px;
+	overflow-y: auto;
+	padding: 15px;
+	border-radius: 3px;
+	background: #f9f9f9;
+	font-family: Consolas, Monaco, monospace;
+	white-space: pre-wrap;
+	word-wrap: break-word;
 }
 
 @media (max-width: 782px) {

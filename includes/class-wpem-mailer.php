@@ -32,7 +32,8 @@ class WPEM_Mailer {
 		$is_html      = ( 'html' === $settings['email_format'] );
 		$replacements = $this->build_replacements( $values, $ip, false );
 		$subject      = strtr( $settings['email_subject'], $replacements );
-		$message      = strtr( $settings['email_message'], $replacements );
+		// 按当前表单类型的可见字段组装详情，避免邮件正文模板与类型不一致。
+		$message      = $this->build_fields_message( $settings, $values );
 		$headers      = $this->build_headers( $settings, $values );
 
 		if ( $is_html ) {
@@ -64,6 +65,34 @@ class WPEM_Mailer {
 		}
 
 		return $replacements;
+	}
+
+	/**
+	 * 按表单可见字段生成提交详情正文。
+	 *
+	 * @param array<string, mixed>  $settings 表单配置。
+	 * @param array<string, string> $values   字段值。
+	 * @return string
+	 */
+	private function build_fields_message( $settings, $values ) {
+		$type        = isset( $settings['form_type'] ) ? $settings['form_type'] : 'contact_us';
+		$definitions = WPEM_Form_Types::get_fields( $type );
+		$lines       = array();
+
+		foreach ( $definitions as $key => $definition ) {
+			$field_settings = isset( $settings['fields'][ $key ] ) ? $settings['fields'][ $key ] : $definition;
+			if ( ! WPEM_Form_Types::is_field_visible( $field_settings, $definition ) ) {
+				continue;
+			}
+
+			$label   = isset( $field_settings['label'] ) ? $field_settings['label'] : $definition['label'];
+			$value   = isset( $values[ $key ] ) ? $values[ $key ] : '';
+			$lines[] = $label . '：' . $value;
+		}
+
+		$lines[] = __( '提交时间', 'wp-easy-mail' ) . '：' . current_time( 'Y-m-d H:i:s' );
+
+		return implode( "\n", $lines );
 	}
 
 	/**
