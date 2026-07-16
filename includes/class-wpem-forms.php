@@ -230,10 +230,12 @@ class WPEM_Forms {
 					<input type="text" name="wpem_settings[fields][<?php echo esc_attr( $key ); ?>][placeholder]" value="<?php echo esc_attr( $current['placeholder'] ); ?>" <?php disabled( $disabled ); ?>>
 				</label>
 				<?php if ( ! empty( $field['toggleable'] ) ) : ?>
+					<input type="hidden" name="wpem_settings[fields][<?php echo esc_attr( $key ); ?>][visible]" value="0" <?php disabled( $disabled ); ?>>
 					<label class="wpem-checkbox">
 						<input type="checkbox" class="wpem-field-visible" name="wpem_settings[fields][<?php echo esc_attr( $key ); ?>][visible]" value="1" <?php checked( ! isset( $current['visible'] ) || ! empty( $current['visible'] ) ); ?> <?php disabled( $disabled ); ?>>
 						<?php esc_html_e( '显示字段', 'wp-easy-mail' ); ?>
 					</label>
+					<input type="hidden" name="wpem_settings[fields][<?php echo esc_attr( $key ); ?>][required]" value="0" <?php disabled( $disabled ); ?>>
 					<label class="wpem-checkbox wpem-field-required">
 						<input type="checkbox" name="wpem_settings[fields][<?php echo esc_attr( $key ); ?>][required]" value="1" <?php checked( ! empty( $current['required'] ) ); ?> <?php disabled( $disabled || ( isset( $current['visible'] ) && empty( $current['visible'] ) ) ); ?>>
 						<?php esc_html_e( '设为必填', 'wp-easy-mail' ); ?>
