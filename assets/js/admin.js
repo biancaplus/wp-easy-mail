@@ -71,13 +71,25 @@
 				if (!fieldset) {
 					return;
 				}
-				var requiredInput = fieldset.querySelector('.wpem-field-required input[type="checkbox"]');
+				var requiredInput = fieldset.querySelector('.wpem-field-required-toggle');
 				if (!requiredInput) {
 					return;
+				}
+				var requiredName = requiredInput.getAttribute('data-name');
+				if (!requiredName) {
+					requiredName = requiredInput.getAttribute('name');
+					if (requiredName) {
+						requiredInput.setAttribute('data-name', requiredName);
+					}
 				}
 				requiredInput.disabled = !visibleInput.checked;
 				if (!visibleInput.checked) {
 					requiredInput.checked = false;
+					requiredInput.removeAttribute('name');
+					return;
+				}
+				if (requiredName) {
+					requiredInput.setAttribute('name', requiredName);
 				}
 			}
 

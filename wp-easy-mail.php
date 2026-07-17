@@ -3,7 +3,7 @@
  * Plugin Name: WP Easy Mail
  * Plugin URI: https://wordpress.org/plugins/wp-easy-mail/
  * Description: 提供可配置的联系我们与获取报价表单、邮件通知及提交记录管理。
- * Version: 1.1.1
+ * Version: 1.1.2
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: biancaplus
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'WPEM_VERSION', '1.1.1' );
+define( 'WPEM_VERSION', '1.1.2' );
 define( 'WPEM_FILE', __FILE__ );
 define( 'WPEM_PATH', plugin_dir_path( __FILE__ ) );
 define( 'WPEM_URL', plugin_dir_url( __FILE__ ) );

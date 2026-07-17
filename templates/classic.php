@@ -14,6 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 <section
 	class="wpem-form-wrap wpem-template-classic"
 	style="--wpem-accent: <?php echo esc_attr( $theme_color ); ?>;"
+	data-frontend-script="<?php echo esc_url( $frontend_script_url ); ?>"
 	aria-labelledby="<?php echo esc_attr( $instance_id ); ?>-title"
 >
 	<header class="wpem-form-header">
@@ -36,6 +37,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 	<form
 		class="wpem-form"
+		data-ajax-url="<?php echo esc_url( $ajax_url ); ?>"
+		data-site-key="<?php echo esc_attr( $site_key ); ?>"
 		data-required-message="<?php echo esc_attr( $settings['required_message'] ); ?>"
 		data-invalid-message="<?php echo esc_attr( $settings['invalid_message'] ); ?>"
 		data-recaptcha="<?php echo $recaptcha_on ? '1' : '0'; ?>"
@@ -57,7 +60,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<?php endforeach; ?>
 		</div>
 
-		<button type="submit" class="wpem-submit" data-loading-text="<?php esc_attr_e( '提交中…', 'wp-easy-mail' ); ?>">
+		<button type="button" class="wpem-submit" data-loading-text="<?php esc_attr_e( '提交中…', 'wp-easy-mail' ); ?>">
 			<?php echo esc_html( $settings['submit_text'] ); ?>
 		</button>
 

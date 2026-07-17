@@ -28,6 +28,33 @@ class WPEM_Forms {
 	}
 
 	/**
+	 * 解析后台 checkbox 提交值（兼容 hidden=0 + checkbox=1 组合）。
+	 *
+	 * @param mixed $value 原始值。
+	 * @return bool
+	 */
+	private static function is_checkbox_checked( $value ) {
+		if ( is_array( $value ) ) {
+			return in_array( '1', $value, true ) || in_array( 1, $value, true ) || in_array( true, $value, true );
+		}
+
+		return true === $value || 1 === $value || '1' === (string) $value;
+	}
+
+	/**
+	 * 规范化字段配置布尔值。
+	 *
+	 * @param array<string, mixed> $field_settings 已保存字段配置。
+	 * @return array<string, mixed>
+	 */
+	private static function normalize_field_settings( $field_settings ) {
+		$field_settings['visible']  = self::is_checkbox_checked( isset( $field_settings['visible'] ) ? $field_settings['visible'] : true );
+		$field_settings['required'] = self::is_checkbox_checked( isset( $field_settings['required'] ) ? $field_settings['required'] : false );
+
+		return $field_settings;
+	}
+
+	/**
 	 * 注册私有表单实体。
 	 *
 	 * @return void
@@ -96,6 +123,14 @@ class WPEM_Forms {
 			$site_email                   = WPEM_Form_Types::get_site_email_defaults();
 			$settings['email_to']         = $site_email['email_to'];
 			$settings['email_from_name']  = $site_email['email_from_name'];
+		}
+
+		if ( ! empty( $settings['fields'] ) && is_array( $settings['fields'] ) ) {
+			foreach ( $settings['fields'] as $key => $field_settings ) {
+				if ( is_array( $field_settings ) ) {
+					$settings['fields'][ $key ] = self::normalize_field_settings( $field_settings );
+				}
+			}
 		}
 
 		return $settings;
@@ -232,12 +267,12 @@ class WPEM_Forms {
 				<?php if ( ! empty( $field['toggleable'] ) ) : ?>
 					<input type="hidden" name="wpem_settings[fields][<?php echo esc_attr( $key ); ?>][visible]" value="0" <?php disabled( $disabled ); ?>>
 					<label class="wpem-checkbox">
-						<input type="checkbox" class="wpem-field-visible" name="wpem_settings[fields][<?php echo esc_attr( $key ); ?>][visible]" value="1" <?php checked( ! isset( $current['visible'] ) || ! empty( $current['visible'] ) ); ?> <?php disabled( $disabled ); ?>>
+						<input type="checkbox" class="wpem-field-visible" name="wpem_settings[fields][<?php echo esc_attr( $key ); ?>][visible]" value="1" <?php checked( ! empty( $current['visible'] ) ); ?> <?php disabled( $disabled ); ?>>
 						<?php esc_html_e( '显示字段', 'wp-easy-mail' ); ?>
 					</label>
-					<input type="hidden" name="wpem_settings[fields][<?php echo esc_attr( $key ); ?>][required]" value="0" <?php disabled( $disabled ); ?>>
+					<input type="hidden" class="wpem-field-required-hidden" name="wpem_settings[fields][<?php echo esc_attr( $key ); ?>][required]" value="0" <?php disabled( $disabled ); ?>>
 					<label class="wpem-checkbox wpem-field-required">
-						<input type="checkbox" name="wpem_settings[fields][<?php echo esc_attr( $key ); ?>][required]" value="1" <?php checked( ! empty( $current['required'] ) ); ?> <?php disabled( $disabled || ( isset( $current['visible'] ) && empty( $current['visible'] ) ) ); ?>>
+						<input type="checkbox" class="wpem-field-required-toggle" name="wpem_settings[fields][<?php echo esc_attr( $key ); ?>][required]" value="1" <?php checked( ! empty( $current['required'] ) ); ?> <?php disabled( $disabled || empty( $current['visible'] ) ); ?>>
 						<?php esc_html_e( '设为必填', 'wp-easy-mail' ); ?>
 					</label>
 				<?php else : ?>
@@ -498,12 +533,15 @@ class WPEM_Forms {
 
 		foreach ( WPEM_Form_Types::get_fields( $type ) as $key => $field ) {
 			$raw_field = isset( $raw['fields'][ $key ] ) && is_array( $raw['fields'][ $key ] ) ? $raw['fields'][ $key ] : array();
-			$visible   = empty( $field['toggleable'] ) || ! empty( $raw_field['visible'] );
+			$visible   = empty( $field['toggleable'] ) || self::is_checkbox_checked( isset( $raw_field['visible'] ) ? $raw_field['visible'] : false );
+			$required  = empty( $field['toggleable'] )
+				? $visible
+				: ( $visible && self::is_checkbox_checked( isset( $raw_field['required'] ) ? $raw_field['required'] : false ) );
 			$settings['fields'][ $key ] = array(
 				'label'       => isset( $raw_field['label'] ) ? sanitize_text_field( $raw_field['label'] ) : $field['label'],
 				'placeholder' => isset( $raw_field['placeholder'] ) ? sanitize_text_field( $raw_field['placeholder'] ) : $field['placeholder'],
 				'visible'     => $visible,
-				'required'    => $visible && ( empty( $field['toggleable'] ) || ! empty( $raw_field['required'] ) ),
+				'required'    => $required,
 			);
 		}
 
